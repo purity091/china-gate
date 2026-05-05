@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Category, NewsItem } from '../types';
-import { fetchNewsFromGemini } from '../services/geminiService';
+import { getNewsByCategory } from '../services/newsService';
 import { BentoGridSection, ImmersiveSection, StandardGridSection, WideShowcaseSection } from './SectionLayouts';
 
 interface CategorySectionProps {
@@ -20,7 +20,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({ category, title, icon
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !loaded && !loading) {
-          loadData();
+          void loadData();
         }
       },
       { threshold: 0.1, rootMargin: '100px' }
@@ -35,35 +35,30 @@ const CategorySection: React.FC<CategorySectionProps> = ({ category, title, icon
 
   const loadData = async () => {
     setLoading(true);
-    // Fetch 5 items to support larger layouts like Bento
-    const news = await fetchNewsFromGemini(category, 5);
-    setItems(news);
+    setItems(getNewsByCategory(category, 5));
     setLoading(false);
     setLoaded(true);
   };
 
   const renderLayout = () => {
-      // If loaded but no items, return null or empty state (handled inside components usually, or here)
-      if (loaded && items.length === 0) return null;
+    const props = { title, icon, items, loading };
 
-      const props = { title, icon, items, loading };
-
-      switch (layoutType) {
-          case 'bento':
-              return <BentoGridSection {...props} />;
-          case 'immersive':
-              return <ImmersiveSection {...props} />;
-          case 'wide':
-              return <WideShowcaseSection {...props} />;
-          default:
-              return <StandardGridSection {...props} />;
-      }
+    switch (layoutType) {
+      case 'bento':
+        return <BentoGridSection {...props} />;
+      case 'immersive':
+        return <ImmersiveSection {...props} />;
+      case 'wide':
+        return <WideShowcaseSection {...props} />;
+      default:
+        return <StandardGridSection {...props} />;
+    }
   };
 
   return (
-    <section 
-      id={`section-${category}`} 
-      ref={sectionRef} 
+    <section
+      id={`section-${category}`}
+      ref={sectionRef}
       className="scroll-mt-24"
     >
       {renderLayout()}
